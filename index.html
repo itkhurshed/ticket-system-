@@ -309,7 +309,8 @@
         <input id="li-pass" type="password" placeholder="••••••••" value="">
       </div>
       <button class="btn-primary" onclick="handleLogin()">Sign in</button>
-      <div class="login-foot">Protected by MFA · Forgot your password? Contact IT Support</div>
+      <div class="login-foot">Protected by MFA · <a href="#" onclick="openForgotPassword();return false;" style="color:var(--gold);font-weight:600;text-decoration:underline;cursor:pointer;">Forgot your password?</a></div>
+      <div class="login-foot" style="margin-top:6px;">Can't sign in at all? <a href="#" onclick="resetDemoData();return false;" style="color:var(--rust);font-weight:600;text-decoration:underline;cursor:pointer;">Reset saved browser data</a></div>
       <div style="text-align:center;margin-top:20px;">
         <span class="dev-credit" style="background:rgba(184,146,61,0.06);color:var(--slate-soft);border-color:var(--line);">
           Developed by <strong style="background:linear-gradient(90deg, var(--gold), var(--ink), var(--gold)); background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent; animation: shimmerText 4s linear infinite;">Mohammad Khurshed Alam</strong>
@@ -843,7 +844,7 @@
       <div class="field"><label>Temporary password</label><input id="nu-password" type="text" value="Kmefic@2026"></div>
       <div class="field-grid">
         <div class="field"><label>Position</label><input id="nu-position" type="text" placeholder="e.g. Financial Analyst"></div>
-        <div class="field"><label>Manager</label><input id="nu-manager" type="text" placeholder="e.g. Faisal Al-Sabah"></div>
+        <div class="field"><label>Manager</label><input id="nu-manager" type="text" placeholder="e.g. Mohammad Khurshed Alam"></div>
       </div>
       <div class="field-grid">
         <div class="field"><label>Extension</label><input id="nu-extension" type="text" placeholder="e.g. 210"></div>
@@ -880,6 +881,39 @@
       <div class="field"><label>Confirm password</label><input id="mp-confirm" type="text" placeholder="Re-enter new password"></div>
     </div>
     <div class="modal-foot"><button class="btn-secondary" onclick="closeModal('modal-modify-password')">Cancel</button><button class="btn-gold" onclick="submitModifyPassword()">Set Password &amp; Notify</button></div>
+  </div>
+</div>
+
+<!-- ============ MODAL: FORGOT PASSWORD ============ -->
+<div class="modal-overlay" id="modal-forgot">
+  <div class="modal">
+    <div class="modal-head"><h3>Reset Password</h3><button class="modal-close" onclick="closeModal('modal-forgot')">×</button></div>
+    <div class="modal-body">
+      <div class="alert error" id="fp-alert"></div>
+      <div id="fp-step1">
+        <p style="font-size:13px;color:var(--slate-soft);margin-top:0;">Enter your username and choose how to receive your verification code.</p>
+        <div class="field"><label>Username</label><input id="fp-username" type="text" placeholder="Enter your username"></div>
+        <div class="field">
+          <label>Send verification code via</label>
+          <select id="fp-method">
+            <option value="email">Email (registered Gmail)</option>
+            <option value="sms">SMS (registered mobile)</option>
+          </select>
+        </div>
+      </div>
+      <div id="fp-step2" class="hidden">
+        <p style="font-size:13px;color:var(--slate-soft);margin-top:0;" id="fp-sent-to"></p>
+        <div class="field"><label>Verification code</label><input id="fp-code" type="text" placeholder="6-digit code"></div>
+        <div class="field"><label>New password</label><input id="fp-new" type="password" placeholder="New password"></div>
+        <div class="field"><label>Confirm new password</label><input id="fp-confirm" type="password" placeholder="Confirm new password"></div>
+        <button class="btn-ghost" onclick="resendResetCode()">Resend code</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modal-forgot')">Cancel</button>
+      <button class="btn-gold" id="fp-step1-btn" onclick="sendResetCode()">Send Code</button>
+      <button class="btn-gold hidden" id="fp-step2-btn" onclick="submitResetPassword()">Reset Password</button>
+    </div>
   </div>
 </div>
 
@@ -957,15 +991,15 @@ let currentUser = null;
 let ticketSeq = 4521;
 
 const users = [
-  {id:1, name:'Faisal Al-Sabah', username:'f.alsabah', email:'f.alsabah@kmefic.com', password:'Admin123!', role:'IT Manager', department:'IT', status:'active', position:'Head of IT', manager:'—', extension:'101', office:'HQ 5th Floor', joined:'2019-03-01'},
-  {id:2, name:'Mohammed Hasan', username:'m.hasan', email:'m.hasan@kmefic.com', password:'Pass123!', role:'Senior Engineer', department:'IT', status:'active', position:'Senior Systems Engineer', manager:'Faisal Al-Sabah', extension:'104', office:'HQ 5th Floor', joined:'2021-06-15'},
-  {id:3, name:'Sara Haidar', username:'s.haidar', email:'s.haidar@kmefic.com', password:'Pass123!', role:'Employee', department:'Finance', status:'active', position:'Financial Analyst', manager:'—', extension:'212', office:'HQ 4th Floor', joined:'2022-01-10'},
-  {id:4, name:'Reem Kanani', username:'r.kanani', email:'r.kanani@kmefic.com', password:'Pass123!', role:'Employee', department:'Compliance', status:'disabled', position:'Compliance Officer', manager:'—', extension:'308', office:'HQ 3rd Floor', joined:'2020-09-01'},
-  {id:5, name:'Mohammad Khurshed Alam', username:'m.khurshed', email:'m.khurshed@kmefic.com', password:'Pass123!', role:'System Administrator', department:'IT', status:'active', position:'Lead Developer & Systems Engineer', manager:'—', extension:'100', office:'HQ 5th Floor', joined:'2026-01-01'},
-  {id:6, name:'M. Bakr', username:'m.bakr', email:'m.bakr@kmefic.com', password:'Pass123!', role:'IT Manager', department:'IT', status:'active', position:'IT Manager', manager:'—', extension:'102', office:'HQ 5th Floor', joined:'2026-01-01'},
-  {id:7, name:'H. Khalil', username:'h.khalil', email:'h.khalil@kmefic.com', password:'Pass123!', role:'Senior Engineer', department:'IT', status:'active', position:'Senior Engineer', manager:'M. Bakr', extension:'105', office:'HQ 5th Floor', joined:'2026-01-01'},
-  {id:8, name:'G. Kavi', username:'g.kavi', email:'g.kavi@kmefic.com', password:'Pass123!', role:'Employee', department:'Operations', status:'active', position:'Operations Staff', manager:'—', extension:'220', office:'HQ 4th Floor', joined:'2026-01-01'},
+  {id:2, name:'Mohammed Hasan', username:'m.hasan', email:'m.hasan@kmefic.com', password:'Pass123!', role:'Senior Engineer', department:'IT', status:'active', position:'Senior Systems Engineer', manager:'Mohammad Khurshed Alam', extension:'104', office:'HQ 5th Floor', joined:'2021-06-15', mobile:'+965 5555 1002'},
+  {id:3, name:'Sara Haidar', username:'s.haidar', email:'s.haidar@kmefic.com', password:'Pass123!', role:'Employee', department:'Finance', status:'active', position:'Financial Analyst', manager:'—', extension:'212', office:'HQ 4th Floor', joined:'2022-01-10', mobile:'+965 5555 1003'},
+  {id:4, name:'Reem Kanani', username:'r.kanani', email:'r.kanani@kmefic.com', password:'Pass123!', role:'Employee', department:'Compliance', status:'disabled', position:'Compliance Officer', manager:'—', extension:'308', office:'HQ 3rd Floor', joined:'2020-09-01', mobile:'+965 5555 1004'},
+  {id:5, name:'Mohammad Khurshed Alam', username:'m.khurshed', email:'m.khurshed@kmefic.com', password:'P@ssw0rd', role:'System Administrator', department:'IT', status:'active', position:'Lead Developer & Systems Engineer', manager:'—', extension:'100', office:'HQ 5th Floor', joined:'2026-01-01', mobile:'+965 5555 1005'},
+  {id:7, name:'H. Khalil', username:'h.khalil', email:'h.khalil@kmefic.com', password:'Pass123!', role:'Senior Engineer', department:'IT', status:'active', position:'Senior Engineer', manager:'Mohammad Khurshed Alam', extension:'105', office:'HQ 5th Floor', joined:'2026-01-01', mobile:'+965 5555 1007'},
+  {id:8, name:'G. Kavi', username:'g.kavi', email:'g.kavi@kmefic.com', password:'Pass123!', role:'Employee', department:'Operations', status:'active', position:'Operations Staff', manager:'—', extension:'220', office:'HQ 4th Floor', joined:'2026-01-01', mobile:'+965 5555 1008'},
 ];
+
+const ENGINEER_ROLES = ['IT Support','Senior Engineer','System Administrator','IT Manager'];
 
 const escalationRules = [
   {level:'Level 1', trigger:'Response target missed', action:'Notify assigned engineer + IT Manager'},
@@ -989,12 +1023,12 @@ const tickets = [
   {id:'#KM-04520', subject:'New laptop request — Compliance dept.', desc:'Onboarding new hire, needs standard laptop image.', category:'Hardware', priority:'Medium', department:'Compliance', status:'Open', requester:'Reem Kanani', assignee:'Unassigned', sla:'Tomorrow'},
   {id:'#KM-04519', subject:'Outlook not syncing shared mailbox', desc:'Shared mailbox stopped syncing after last update.', category:'Email / Outlook', priority:'Low', department:'Operations', status:'Resolved', requester:'A. Boland', assignee:'Mohammed Hasan', sla:'—'},
   {id:'#KM-04518', subject:'Trading floor server — disk space critical', desc:'C: drive at 97% on TRADE-SRV02.', category:'Server', priority:'Critical', department:'Finance', status:'Escalated', requester:'System Monitor', assignee:'Mohammed Hasan', sla:'Overdue'},
-  {id:'#KM-04517', subject:'Password reset — Active Directory locked', desc:'Account locked after failed attempts.', category:'Access Request', priority:'Medium', department:'HR', status:'Resolved', requester:'Sara Haidar', assignee:'Faisal Al-Sabah', sla:'—'},
+  {id:'#KM-04517', subject:'Password reset — Active Directory locked', desc:'Account locked after failed attempts.', category:'Access Request', priority:'Medium', department:'HR', status:'Resolved', requester:'Sara Haidar', assignee:'Mohammad Khurshed Alam', sla:'—'},
   {id:'#KM-04516', subject:'Printer offline, 4th floor finance wing', desc:'HP LaserJet not responding, all users affected.', category:'Hardware', priority:'Low', department:'Finance', status:'Open', requester:'Sara Haidar', assignee:'Unassigned', sla:'14:00'},
 ];
 
 const assets = [
-  {tag:'KM-AST-1001', type:'Laptop', owner:'Faisal Al-Sabah', status:'In Use', warranty:'Jan 2027'},
+  {tag:'KM-AST-1001', type:'Laptop', owner:'Mohammad Khurshed Alam', status:'In Use', warranty:'Jan 2027'},
   {tag:'KM-AST-1002', type:'Desktop', owner:'Sara Haidar', status:'In Use', warranty:'Aug 2026'},
   {tag:'KM-AST-1003', type:'Server', owner:'Data Center — Rack 2', status:'In Use', warranty:'Mar 2028'},
   {tag:'KM-AST-1004', type:'Printer', owner:'4th Floor Finance', status:'Needs Service', warranty:'Expired'},
@@ -1136,6 +1170,88 @@ function handleLogout(){
 function showAlert(el, msg){ el.textContent = msg; el.classList.add('show'); }
 
 /* ============================================================
+   FORGOT PASSWORD — simulated Email (Gmail) / SMS reset
+   NOTE: This is a front-end-only demo. No real email or SMS is
+   sent — the "code" is generated locally and shown in a toast /
+   audit entry so the flow can be tested end-to-end. Wiring this
+   to real delivery requires a backend (e.g. Gmail API / SMTP for
+   email, Twilio or similar for SMS) which this static page does
+   not have.
+   ============================================================ */
+let forgotPasswordState = null;
+
+function openForgotPassword(){
+  document.getElementById('fp-alert').classList.remove('show');
+  document.getElementById('fp-username').value = '';
+  document.getElementById('fp-method').value = 'email';
+  document.getElementById('fp-code').value = '';
+  document.getElementById('fp-new').value = '';
+  document.getElementById('fp-confirm').value = '';
+  document.getElementById('fp-step1').classList.remove('hidden');
+  document.getElementById('fp-step2').classList.add('hidden');
+  document.getElementById('fp-step1-btn').classList.remove('hidden');
+  document.getElementById('fp-step2-btn').classList.add('hidden');
+  forgotPasswordState = null;
+  openModal('modal-forgot');
+}
+
+function generateResetCode(account, method){
+  const code = String(Math.floor(100000 + Math.random()*900000));
+  forgotPasswordState = { userId: account.id, code, method };
+  const dest = method === 'email' ? account.email : account.mobile;
+  if(method === 'email'){
+    logAudit(`Password reset code emailed to ${account.email} for "${account.username}"`);
+    toast(`📧 Verification code sent to ${account.email}`);
+  } else {
+    logAudit(`Password reset code texted to ${account.mobile} for "${account.username}"`);
+    toast(`📱 Verification code sent via SMS to ${account.mobile}`);
+  }
+  document.getElementById('fp-sent-to').textContent =
+    `A 6-digit code was sent via ${method === 'email' ? 'email' : 'SMS'} to ${dest}. (Demo code: ${code})`;
+}
+
+function sendResetCode(){
+  const alertEl = document.getElementById('fp-alert');
+  alertEl.classList.remove('show');
+  const uname = document.getElementById('fp-username').value.trim();
+  const method = document.getElementById('fp-method').value;
+  const account = users.find(x => x.username.toLowerCase() === uname.toLowerCase());
+  if(!account){ showAlert(alertEl, 'No account found for that username.'); return; }
+  if(method === 'sms' && !account.mobile){ showAlert(alertEl, 'No mobile number is on file for this account. Try email instead.'); return; }
+  if(method === 'email' && !account.email){ showAlert(alertEl, 'No email is on file for this account.'); return; }
+  generateResetCode(account, method);
+  document.getElementById('fp-step1').classList.add('hidden');
+  document.getElementById('fp-step2').classList.remove('hidden');
+  document.getElementById('fp-step1-btn').classList.add('hidden');
+  document.getElementById('fp-step2-btn').classList.remove('hidden');
+}
+
+function resendResetCode(){
+  if(!forgotPasswordState) return;
+  const account = users.find(x => x.id === forgotPasswordState.userId);
+  generateResetCode(account, forgotPasswordState.method);
+}
+
+function submitResetPassword(){
+  const alertEl = document.getElementById('fp-alert');
+  alertEl.classList.remove('show');
+  if(!forgotPasswordState){ showAlert(alertEl, 'Session expired — please start again.'); return; }
+  const code = document.getElementById('fp-code').value.trim();
+  const nw = document.getElementById('fp-new').value;
+  const cf = document.getElementById('fp-confirm').value;
+  if(code !== forgotPasswordState.code){ showAlert(alertEl, 'Incorrect verification code.'); return; }
+  if(nw.length < 8){ showAlert(alertEl, 'New password must be at least 8 characters.'); return; }
+  if(nw !== cf){ showAlert(alertEl, 'New password and confirmation do not match.'); return; }
+  const account = users.find(x => x.id === forgotPasswordState.userId);
+  account.password = nw;
+  logAudit(`Password reset via ${forgotPasswordState.method === 'email' ? 'email' : 'SMS'} for "${account.username}"`);
+  saveState();
+  toast('Password updated — you can now sign in.');
+  closeModal('modal-forgot');
+  forgotPasswordState = null;
+}
+
+/* ============================================================
    NAV / VIEW SWITCHING
    ============================================================ */
 document.querySelectorAll('.nav-item').forEach(item=>{
@@ -1206,7 +1322,7 @@ function renderDashboard(){
     <div class="stat-card warn"><div class="label">Pending User</div><div class="value">${pending}</div></div>
     <div class="stat-card crit"><div class="label">SLA Breached</div><div class="value">${breached}</div></div>
     <div class="stat-card"><div class="label">Assets Tracked</div><div class="value">${assets.length}</div></div>
-    <div class="stat-card ok"><div class="label">Engineers Online</div><div class="value">${users.filter(u=>u.status==='active' && u.role!=='Employee').length}</div></div>`;
+    <div class="stat-card ok"><div class="label">Engineers Online</div><div class="value">${users.filter(u=>u.status==='active' && ENGINEER_ROLES.includes(u.role)).length}</div></div>`;
   document.getElementById('recent-tag').textContent = `Showing ${Math.min(5,tickets.length)} of ${tickets.length}`;
   document.getElementById('dash-ticket-rows').innerHTML = tickets.slice(0,5).map(t=>`
     <tr>
@@ -1233,7 +1349,7 @@ function renderDashboard(){
     <div class="bar-col"><div class="bar" style="height:${(byDept[d]/deptMax)*100}%;"></div><span class="bl">${d}</span></div>`).join('');
 
   const byTech = {};
-  users.filter(u=>u.role!=='Employee').forEach(u=>{ byTech[u.name] = tickets.filter(t=>t.assignee===u.name && ['Resolved','Closed'].includes(t.status)).length; });
+  users.filter(u=>ENGINEER_ROLES.includes(u.role)).forEach(u=>{ byTech[u.name] = tickets.filter(t=>t.assignee===u.name && ['Resolved','Closed'].includes(t.status)).length; });
   const techMax = Math.max(...Object.values(byTech),1);
   document.getElementById('chart-tech').innerHTML = Object.keys(byTech).map(n=>`
     <div class="bar-col"><div class="bar" style="height:${(byTech[n]/techMax)*100}%;background:var(--gold);"></div><span class="bl">${n.split(' ')[0]}</span></div>`).join('');
@@ -1377,7 +1493,7 @@ function renderReports(){
         return `<tr><td>${priorityLabel(s.p)}</td><td class="mono tid">${s.response}</td><td class="mono tid">${s.resolution}</td><td>${breached>0?`<span class="badge critical"><span class="dot"></span>${breached}</span>`:'<span class="badge resolved"><span class="dot"></span>0</span>'}</td></tr>`;
       }).join('')}</tbody></table></div>`;
   } else if(reportType==='engineer'){
-    const engs = users.filter(u=>u.role!=='Employee');
+    const engs = users.filter(u=>ENGINEER_ROLES.includes(u.role));
     body.innerHTML = `<div class="panel"><div class="panel-head"><h3>Engineer Report (${reportPeriod})</h3></div>
       <table><thead><tr><th>Engineer</th><th>Assigned</th><th>Resolved</th><th>Open</th></tr></thead>
       <tbody>${engs.map(e=>{
@@ -1479,9 +1595,11 @@ function runGlobalSearch(){
 }
 function closeSearchAnd(fn){ fn(); }
 
-function populateAssigneeSelect(){
-  const eng = users.filter(u=> ['IT Support','Senior Engineer','System Administrator','IT Manager'].includes(u.role) && u.status==='active');
-  document.getElementById('td-assignee').innerHTML = `<option>Unassigned</option>` + eng.map(e=>`<option>${e.name}</option>`).join('');
+function populateAssigneeSelect(keepName){
+  const eng = users.filter(u=> ENGINEER_ROLES.includes(u.role) && u.status==='active');
+  let names = eng.map(e=>e.name);
+  if(keepName && keepName!=='Unassigned' && !names.includes(keepName)) names.push(keepName);
+  document.getElementById('td-assignee').innerHTML = `<option>Unassigned</option>` + names.map(n=>`<option>${n}</option>`).join('');
 }
 
 /* ============================================================
@@ -1489,12 +1607,31 @@ function populateAssigneeSelect(){
    ============================================================ */
 function openModal(id){ document.getElementById(id).classList.add('active'); }
 function closeModal(id){ document.getElementById(id).classList.remove('active'); }
-function openNewTicket(){ openModal('modal-ticket'); }
+function openNewTicket(){
+  document.getElementById('nt-subject').value = '';
+  document.getElementById('nt-category').selectedIndex = 0;
+  document.getElementById('nt-priority').value = 'High';
+  document.getElementById('nt-department').selectedIndex = 0;
+  document.getElementById('nt-location').value = '';
+  document.getElementById('nt-desc').value = '';
+  openModal('modal-ticket');
+}
 function openNewUser(){
   document.getElementById('nu-alert').classList.remove('show');
+  ['nu-name','nu-username','nu-email','nu-position','nu-manager','nu-extension','nu-office'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nu-password').value = 'Kmefic@2026';
+  document.getElementById('nu-role').selectedIndex = 0;
+  document.getElementById('nu-department').selectedIndex = 0;
+  document.getElementById('nu-joined').value = '';
   openModal('modal-user');
 }
-function openNewAsset(){ openModal('modal-asset'); }
+function openNewAsset(){
+  document.getElementById('na-tag').value = '';
+  document.getElementById('na-type').selectedIndex = 0;
+  document.getElementById('na-owner').value = '';
+  document.getElementById('na-warranty').value = '';
+  openModal('modal-asset');
+}
 function openChangePassword(){
   document.getElementById('cp-alert').classList.remove('show');
   document.getElementById('cp-current').value='';
@@ -1509,10 +1646,10 @@ function openTicketDetail(id){
   if(!t) return;
   activeDetailId = id;
   document.getElementById('td-title').textContent = `${t.id} — ${t.subject}`;
-  document.getElementById('td-desc').textContent = t.desc;
+  document.getElementById('td-desc').textContent = t.location ? `${t.desc}  ·  📍 ${t.location}` : t.desc;
   document.getElementById('td-status').value = t.status;
   document.getElementById('td-transfer').value = '— No transfer —';
-  populateAssigneeSelect();
+  populateAssigneeSelect(t.assignee);
   document.getElementById('td-assignee').value = t.assignee;
   renderTicketNotes(id);
   openModal('modal-detail');
@@ -1531,6 +1668,7 @@ function mergeTicket(){
   if(!target){ toast(`Ticket ${targetId} not found`); return; }
   const current = tickets.find(t=>t.id===activeDetailId);
   current.status = 'Closed';
+  document.getElementById('td-status').value = 'Closed';
   logAudit(`${currentUser.name} merged ${current.id} into ${target.id}`);
   document.getElementById('td-merge-id').value = '';
   renderTicketNotes(activeDetailId);
@@ -1575,7 +1713,13 @@ function saveTicketDetail(){
   toast(`${t.id} updated`);
 }
 
-function openNewVendor(){ openModal('modal-vendor'); }
+function openNewVendor(){
+  document.getElementById('nv-name').value = '';
+  document.getElementById('nv-contact').value = '';
+  document.getElementById('nv-contract').value = '';
+  document.getElementById('nv-amc').value = '';
+  openModal('modal-vendor');
+}
 function submitNewVendor(){
   const name = document.getElementById('nv-name').value.trim();
   if(!name){ toast('Please enter a vendor name'); return; }
@@ -1591,7 +1735,13 @@ function submitNewVendor(){
   toast(`Vendor "${name}" added`);
 }
 
-function openNewStock(){ openModal('modal-stock'); }
+function openNewStock(){
+  document.getElementById('ns-name').value = '';
+  document.getElementById('ns-category').selectedIndex = 0;
+  document.getElementById('ns-qty').value = '10';
+  document.getElementById('ns-reorder').value = '5';
+  openModal('modal-stock');
+}
 function submitNewStock(){
   const name = document.getElementById('ns-name').value.trim();
   if(!name){ toast('Please enter an item name'); return; }
@@ -1620,6 +1770,7 @@ function submitTicket(){
     category: document.getElementById('nt-category').value,
     priority: document.getElementById('nt-priority').value,
     department: document.getElementById('nt-department').value,
+    location: document.getElementById('nt-location').value.trim() || '—',
     status:'Open', requester: currentUser.name, assignee:'Unassigned', sla:'Pending triage'
   };
   tickets.unshift(t);
@@ -1694,9 +1845,9 @@ function deleteUser(id){
   const u = users.find(x=>x.id===id);
   if(u.id === currentUser.id){ toast("You can't delete your own account while signed in."); return; }
   if(!confirm(`Permanently delete the account "${u.name}" (${u.username})? This cannot be undone.`)) return;
-  logAudit(`${currentUser.name} deleted account "${u.username}"`);
   const idx = users.findIndex(x=>x.id===id);
   users.splice(idx,1);
+  logAudit(`${currentUser.name} deleted account "${u.username}"`);
   renderUsers();
   toast(`Account "${u.name}" deleted`);
 }
@@ -1707,6 +1858,7 @@ function resetUserPassword(id){
   u.password = temp;
   logAudit(`${currentUser.name} reset password for "${u.username}"`);
   sendEmailNotification(u, 'Your password has been reset — check your email for the temporary password');
+  toast(`🔑 Temporary password for ${u.username}: ${temp} (demo only — a real deployment emails this instead)`);
 }
 
 let activeModifyPasswordUserId = null;
